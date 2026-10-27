@@ -1,0 +1,37 @@
+{
+  "name": "karen-flix",
+  "version": "1.0.0",
+  "description": "Proyecto de peliculas basado con express y nodeJs",
+  "homepage": "https://github.com/perezcleidy069-sketch/karen-flix#readme",
+  "bugs": {
+    "url": "https://github.com/perezcleidy069-sketch/karen-flix/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/perezcleidy069-sketch/karen-flix.git"
+  },
+  "license": "ISC",
+  "author": "Irma Arias, Joseph Ramírez, Cleidy Pérez",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon karen_flix --quiet",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookies": "^0.9.2",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "express-validator": "^7.3.2",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.6",
+    "nodejs": "^0.0.0",
+    "passport-jwt": "^4.0.1",
+    "semver": "^7.8.5"
+  },
+  "devDependencies": {
+    "dotenv": "^18.0.9",
+    "nodemon": "^3.1.14"
+  }
+}
