@@ -35,7 +35,7 @@ export default class UsuarioObtenerDTO {
         nombre: this.#nombre,
         email: this.#email,
         telefono: this.#telefono,
-        activo: this.activo, // Usamos el getter para que devuelva true/false limpio
+        activo: this.activo, 
         creadoEn: this.#creadoEn
       }
     }

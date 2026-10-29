@@ -1,5 +1,4 @@
 import { pool } from '../config/db.js';
-import bcrypt from 'bcrypt';
 
 export default class UsuarioModel {
     #id;
@@ -28,8 +27,7 @@ export default class UsuarioModel {
 
     async guardar() {
         try {
-            const seguridad = 10;
-            const contrasenaCriptada = await bcrypt.hash(this.#contrasena, seguridad);
+
 
             const query = 'INSERT INTO usuarios (nombre, apellido, email, telefono, contrasena, role, activo, likes, dislikes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
@@ -38,7 +36,6 @@ export default class UsuarioModel {
                 this.#apellido,
                 this.#email,
                 this.#telefono,
-                contrasenaCriptada,
                 this.#role,
                 this.#activo,
                 this.#likes,
