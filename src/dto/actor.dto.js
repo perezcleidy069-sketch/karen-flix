@@ -3,7 +3,7 @@ export default class ActorDTO{
     #apellido;
     
     constructor(data){
-        this.#nombre=data.nombre:
+        this.#nombre=data.nombre;
         this.#apellido=data.apellido;
     }
     set nombre(nombre){this.#nombre=nombre}

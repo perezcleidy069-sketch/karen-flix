@@ -6,7 +6,7 @@ USE KARAN;
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(60) NOT NULL,
-    apellido VARCHAR(250),
+   ---- apellido VARCHAR(250),
     email VARCHAR(100) NOT NULL UNIQUE,
     telefono VARCHAR(20),
     contrasena VARCHAR(250) NOT NULL,
