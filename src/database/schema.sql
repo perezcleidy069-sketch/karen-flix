@@ -1,6 +1,6 @@
 
-CREATE DATABASE IF NOT EXISTS KARAN;
-USE KARAN;
+CREATE DATABASE IF NOT EXISTS kare_flix;
+USE karen_flix;
 
 -- 1. Tabla de Usuarios
 CREATE TABLE IF NOT EXISTS usuarios (
