@@ -2,11 +2,13 @@ export default class ActorCrearDTO {
     #id;
     #nombre;
     #apellido;
+    #imagen_url;
 
     constructor(data) {
         this.#id = data.id || null;
         this.#nombre = data.nombre;
         this.#apellido = data.apellido;
+
     }
 
     set id(id) { this.#id = id; }
