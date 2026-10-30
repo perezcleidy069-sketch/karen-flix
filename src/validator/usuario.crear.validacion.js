@@ -7,9 +7,10 @@ const UsuarioCrearValidaciones = [
         .trim(),
 
     body('apellido')
-        .notEmpty().withMessage('El apellido es obligatorio')
+        .optional({ values: 'falsy' })
         .isString().withMessage('El apellido debe ser un texto')
-        .trim(),
+        .trim()
+        .isLength({ max: 250 }),
 
     body('email')
         .notEmpty().withMessage('El correo es obligatorio')
@@ -22,17 +23,7 @@ const UsuarioCrearValidaciones = [
 
     body('contrasena')
         .notEmpty().withMessage('La contraseña es obligatoria')
-        .isStrongPassword({
-            minLength: 8,
-            minLowercase: 1,
-            minUppercase: 1,
-            minNumbers: 1,
-            minSymbols: 0
-        }).withMessage('La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número'),
-
-    body('role')
-        .notEmpty().withMessage('El rol es obligatorio')
-        .isIn(['usuario', 'administrator']).withMessage('El rol debe ser estrictamente "usuario" o "administrator"')
+        .isLength({ min: 8, max: 72 }).withMessage('La contraseña debe tener entre 8 y 72 caracteres')
 ];
 
 export default UsuarioCrearValidaciones;

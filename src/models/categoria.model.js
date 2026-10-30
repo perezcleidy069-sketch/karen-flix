@@ -1,83 +1,45 @@
 import { pool } from '../config/db.js';
 
 export default class CategoriaModel {
-    #id;
-    #nombre;
-
     constructor(data) {
-        this.#id = data.id || null;
-        this.#nombre = data.nombre;
+        this.id = data.id || null;
+        this.nombre = data.nombre;
+        this.imagen_url = data.imagen_url || null;
     }
 
     async guardar() {
-        try {
-            const query = 'INSERT INTO categorias (nombre) VALUES (?)';
-            const valores = [this.#nombre];
-
-            const [result] = await pool.execute(query, valores);
-            this.#id = result.insertId;
-
-            return {
-                success: true,
-                id: this.#id,
-                mensaje: 'Categoría registrada exitosamente'
-            };
-        } catch (error) {
-            throw error;
-        }
+        const [result] = await pool.execute(
+            'INSERT INTO categorias (nombre, imagen_url) VALUES (?, ?)',
+            [this.nombre, this.imagen_url]
+        );
+        this.id = result.insertId;
+        return { success: true, id: this.id, mensaje: 'Categoría registrada exitosamente' };
     }
 
     static async obtenerTodos() {
-        try {
-            const [filas] = await pool.query('SELECT id, nombre FROM categorias');
-            return filas;
-        } catch (error) {
-            throw error;
-        }
+        const [rows] = await pool.query('SELECT id, nombre, imagen_url FROM categorias ORDER BY nombre');
+        return rows;
     }
 
     static async obtenerPorId(id) {
-        try {
-            const [filas] = await pool.execute('SELECT id, nombre FROM categorias WHERE id = ?', [id]);
-            return filas[0] || null;
-        } catch (error) {
-            throw error;
-        }
+        const [rows] = await pool.execute('SELECT id, nombre, imagen_url FROM categorias WHERE id = ?', [id]);
+        return rows[0] || null;
     }
 
-    async actualizar(id) {
-        try {
-            const categoriaId = id || this.#id;
-            const query = 'UPDATE categorias SET nombre = ? WHERE id = ?';
-            const valores = [this.#nombre, categoriaId];
-
-            const [result] = await pool.execute(query, valores);
-
-            return {
-                success: result.affectedRows > 0,
-                mensaje: result.affectedRows > 0 ? 'Categoría actualizada exitosamente' : 'Categoría no encontrada'
-            };
-        } catch (error) {
-            throw error;
-        }
+    async actualizar(id = this.id) {
+        const [result] = await pool.execute(
+            'UPDATE categorias SET nombre = ?, imagen_url = ? WHERE id = ?',
+            [this.nombre, this.imagen_url, id]
+        );
+        return { success: result.affectedRows > 0, mensaje: result.affectedRows ? 'Categoría actualizada exitosamente' : 'Categoría no encontrada' };
     }
 
     static async eliminar(id) {
-        try {
-            const [result] = await pool.execute('DELETE FROM categorias WHERE id = ?', [id]);
-            return {
-                success: result.affectedRows > 0,
-                mensaje: result.affectedRows > 0 ? 'Categoría eliminada exitosamente' : 'Categoría no encontrada'
-            };
-        } catch (error) {
-            throw error;
-        }
+        const [result] = await pool.execute('DELETE FROM categorias WHERE id = ?', [id]);
+        return { success: result.affectedRows > 0, mensaje: result.affectedRows ? 'Categoría eliminada exitosamente' : 'Categoría no encontrada' };
     }
 
     obtenerDatos() {
-        return {
-            id: this.#id,
-            nombre: this.#nombre
-        };
+        return { id: this.id, nombre: this.nombre, imagen_url: this.imagen_url };
     }
 }

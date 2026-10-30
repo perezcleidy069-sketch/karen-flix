@@ -1,25 +1,32 @@
-const CategoriaModel = require('../models/categoria.model');
-const CategoriaDTO = require('../dto/categoria.dto');
+import CategoriaModel from '../models/categoria.model.js';
 
-class CategoriaController {
-    static async listar(req, res) {
+export default class CategoriaController {
+    static async listar(req, res, next) {
         try {
-            const categorias = await CategoriaModel.obtenerTodas();
-            res.json(categorias);
+            return res.json(await CategoriaModel.obtenerTodos());
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            return next(error);
         }
     }
 
-    static async crear(req, res) {
+    static async obtenerPorId(req, res, next) {
         try {
-            const datosDTO = new CategoriaDTO(req.body);
-            const id = await CategoriaModel.crear(datosDTO);
-            res.status(201).json({ id, mensaje: 'Categoría creada exitosamente' });
+            const categoria = await CategoriaModel.obtenerPorId(req.params.id);
+            if (!categoria) {
+                return res.status(404).json({ error: 'Categoría no encontrada' });
+            }
+            return res.json(categoria);
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            return next(error);
+        }
+    }
+
+    static async crear(req, res, next) {
+        try {
+            const resultado = await new CategoriaModel(req.body).guardar();
+            return res.status(201).json(resultado);
+        } catch (error) {
+            return next(error);
         }
     }
 }
-
-module.exports = CategoriaController;

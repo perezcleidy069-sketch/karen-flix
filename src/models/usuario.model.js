@@ -1,148 +1,80 @@
+import bcrypt from 'bcrypt';
 import { pool } from '../config/db.js';
 
 export default class UsuarioModel {
-    #id;
-    #nombre;
-    #apellido;
-    #email;
-    #telefono;
-    #contrasena;
-    #role;
-    #activo;
-    #likes;
-    #dislikes;
-
     constructor(data) {
-        this.#id = data.id || null;
-        this.#nombre = data.nombre;
-        this.#apellido = data.apellido;
-        this.#email = data.email;
-        this.#telefono = data.telefono;
-        this.#contrasena = data.contrasena || data.constrasena;
-        this.#role = data.role;
-        this.#activo = data.activo ?? true;
-        this.#likes = data.likes || 0;
-        this.#dislikes = data.dislikes || 0;
+        this.id = data.id || null;
+        this.nombre = data.nombre;
+        this.apellido = data.apellido || null;
+        this.email = data.email;
+        this.telefono = data.telefono || null;
+        this.contrasena = data.contrasena;
+        this.avatar_url = data.avatar_url || null;
+        this.role = 'usuario';
+        this.activo = data.activo ?? true;
     }
 
     async guardar() {
-        try {
-
-
-            const query = 'INSERT INTO usuarios (nombre, apellido, email, telefono, contrasena, role, activo, likes, dislikes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-
-            const valores = [
-                this.#nombre,
-                this.#apellido,
-                this.#email,
-                this.#telefono,
-                this.#role,
-                this.#activo,
-                this.#likes,
-                this.#dislikes
-            ];
-
-            const [result] = await pool.execute(query, valores);
-            this.#id = result.insertId;
-
-            return {
-                success: true,
-                id: this.#id,
-                mensaje: `El ${this.#role} ha sido registrado exitosamente`
-            };
-        } catch (error) {
-            throw error;
-        }
+        const passwordHash = await bcrypt.hash(this.contrasena, 12);
+        const [result] = await pool.execute(
+            `INSERT INTO usuarios
+             (nombre, apellido, email, telefono, contrasena, \`role\`, activo, avatar_url)
+             VALUES (?, ?, ?, ?, ?, 'usuario', ?, ?)`,
+            [
+                this.nombre, this.apellido, this.email, this.telefono,
+                passwordHash, this.activo, this.avatar_url
+            ]
+        );
+        this.id = result.insertId;
+        return { success: true, id: this.id, mensaje: 'Usuario registrado exitosamente' };
     }
 
     static async obtenerTodos() {
-        try {
-            const [filas] = await pool.query('SELECT id, nombre, apellido, email, telefono, role, activo, likes, dislikes FROM usuarios');
-            return filas;
-        } catch (error) {
-            throw error;
-        }
+        const [rows] = await pool.query(
+            `SELECT id, nombre, apellido, email, telefono, \`role\`, activo, avatar_url, created_at
+             FROM usuarios ORDER BY id`
+        );
+        return rows;
     }
 
     static async obtenerPorId(id) {
-        try {
-            const [filas] = await pool.execute('SELECT id, nombre, apellido, email, telefono, role, activo, likes, dislikes FROM usuarios WHERE id = ?', [id]);
-            return filas[0] || null;
-        } catch (error) {
-            throw error;
-        }
+        const [rows] = await pool.execute(
+            `SELECT id, nombre, apellido, email, telefono, \`role\`, activo, avatar_url, created_at
+             FROM usuarios WHERE id = ?`,
+            [id]
+        );
+        return rows[0] || null;
     }
 
-    async actualizar(id) {
-        try {
-            const userId = id || this.#id;
-            let contrasenaCriptada = this.#contrasena;
-
-            if (this.#contrasena && !this.#contrasena.startsWith('$2b$')) {
-                contrasenaCriptada = await bcrypt.hash(this.#contrasena, 10);
-            }
-
-            const query = 'UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, telefono = ?, contrasena = ?, role = ?, activo = ?, likes = ?, dislikes = ? WHERE id = ?';
-
-            const valores = [
-                this.#nombre,
-                this.#apellido,
-                this.#email,
-                this.#telefono,
-                contrasenaCriptada,
-                this.#role,
-                this.#activo,
-                this.#likes,
-                this.#dislikes,
-                userId
-            ];
-
-            const [result] = await pool.execute(query, valores);
-
-            return {
-                success: result.affectedRows > 0,
-                mensaje: result.affectedRows > 0 ? 'Usuario actualizado exitosamente' : 'Usuario no encontrado'
-            };
-        } catch (error) {
-            throw error;
-        }
+    async actualizar(id = this.id) {
+        const [result] = await pool.execute(
+            `UPDATE usuarios SET nombre = ?, apellido = ?, email = ?, telefono = ?, avatar_url = ?
+             WHERE id = ?`,
+            [this.nombre, this.apellido, this.email, this.telefono, this.avatar_url, id]
+        );
+        return { success: result.affectedRows > 0, mensaje: result.affectedRows ? 'Usuario actualizado exitosamente' : 'Usuario no encontrado' };
     }
 
     static async eliminar(id) {
-        try {
-            const [result] = await pool.execute('DELETE FROM usuarios WHERE id = ?', [id]);
-            return {
-                success: result.affectedRows > 0,
-                mensaje: result.affectedRows > 0 ? 'Usuario eliminado exitosamente' : 'Usuario no encontrado'
-            };
-        } catch (error) {
-            throw error;
-        }
+        const [result] = await pool.execute('DELETE FROM usuarios WHERE id = ?', [id]);
+        return { success: result.affectedRows > 0, mensaje: result.affectedRows ? 'Usuario eliminado exitosamente' : 'Usuario no encontrado' };
     }
 
     static async cambiarEstado(id, activo) {
-        try {
-            const [result] = await pool.execute('UPDATE usuarios SET activo = ? WHERE id = ?', [activo, id]);
-            return {
-                success: result.affectedRows > 0,
-                mensaje: result.affectedRows > 0 ? 'Estado actualizado exitosamente' : 'Usuario no encontrado'
-            };
-        } catch (error) {
-            throw error;
-        }
+        const [result] = await pool.execute('UPDATE usuarios SET activo = ? WHERE id = ?', [activo, id]);
+        return { success: result.affectedRows > 0, mensaje: result.affectedRows ? 'Estado actualizado exitosamente' : 'Usuario no encontrado' };
     }
 
     obtenerDatos() {
         return {
-            id: this.#id,
-            nombre: this.#nombre,
-            apellido: this.#apellido,
-            email: this.#email,
-            telefono: this.#telefono,
-            role: this.#role,
-            activo: this.#activo,
-            likes: this.#likes,
-            dislikes: this.#dislikes
+            id: this.id,
+            nombre: this.nombre,
+            apellido: this.apellido,
+            email: this.email,
+            telefono: this.telefono,
+            role: this.role,
+            activo: this.activo,
+            avatar_url: this.avatar_url
         };
     }
 }

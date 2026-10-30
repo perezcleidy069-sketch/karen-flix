@@ -1,25 +1,32 @@
-const ActorModel = require('../models/actor.model');
-const ActorDTO = require('../dto/actor.dto');
+import ActoresModel from '../models/actores.model.js';
 
-class ActorController {
-    static async listar(req, res) {
+export default class ActorController {
+    static async listar(req, res, next) {
         try {
-            const actores = await ActorModel.obtenerTodos();
-            res.json(actores);
+            return res.json(await ActoresModel.obtenerTodos());
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            return next(error);
         }
     }
 
-    static async crear(req, res) {
+    static async obtenerPorId(req, res, next) {
         try {
-            const datosDTO = new ActorDTO(req.body);
-            const id = await ActorModel.crear(datosDTO);
-            res.status(201).json({ id, mensaje: 'Actor creado exitosamente' });
+            const actor = await ActoresModel.obtenerPorId(req.params.id);
+            if (!actor) {
+                return res.status(404).json({ error: 'Actor no encontrado' });
+            }
+            return res.json(actor);
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            return next(error);
+        }
+    }
+
+    static async crear(req, res, next) {
+        try {
+            const resultado = await new ActoresModel(req.body).guardar();
+            return res.status(201).json(resultado);
+        } catch (error) {
+            return next(error);
         }
     }
 }
-
-module.exports = ActorController;

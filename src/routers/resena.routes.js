@@ -1,93 +1,140 @@
 import { Router } from 'express';
-import ResenaModel from '../models/resena.model.js';
-import autorizarUsuario from '../middlewares/usuario.middlewares.js'; // Tu middleware de cookie
+import { body, param, query } from 'express-validator';
+import { pool } from '../config/db.js';
+import { autenticar, autenticarOpcional } from '../middlewares/auth.middleware.js';
+import validarRequest from '../middlewares/validar-request.js';
+import {
+    actualizarResena,
+    crearResena,
+    eliminarResena,
+    eliminarVoto,
+    registrarVoto
+} from '../services/resena.service.js';
 
-const resenasRouter = Router();
+const router = Router();
+const reviewSelect = `
+    SELECT r.id, r.idpelicula, r.idusuario, r.titulo, r.comentarios, r.fechaResena,
+           r.puntaje, u.nombre AS usuario,
+           (SELECT COUNT(*) FROM resena_votos WHERE idresena = r.id AND voto = 'like') AS likes,
+           (SELECT COUNT(*) FROM resena_votos WHERE idresena = r.id AND voto = 'dislike') AS dislikes
+    FROM resenas r
+    INNER JOIN usuarios u ON u.id = r.idusuario
+    INNER JOIN peliculas p ON p.idpelicula = r.idpelicula
+`;
 
-// 1. Obtener todas las reseñas (Puede ser público o requerir login, según prefieras)
-resenasRouter.get('/', async (req, res, next) => {
+router.get('/', [
+    query('idpelicula').optional().isInt({ min: 1 }),
+    validarRequest
+], autenticarOpcional, async (req, res, next) => {
     try {
-        const resenas = await ResenaModel.obtenerTodos();
-        res.json(resenas);
+        const conditions = [];
+        const values = [];
+        if (req.user?.role !== 'administrador') {
+            conditions.push("p.estado = 'aprobada'");
+        }
+        if (req.query.idpelicula) {
+            conditions.push('r.idpelicula = ?');
+            values.push(req.query.idpelicula);
+        }
+        const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+        const [rows] = await pool.execute(`${reviewSelect} ${where} ORDER BY r.fechaResena DESC`, values);
+        return res.json(rows);
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 
-// 2. Obtener una reseña por ID
-resenasRouter.get('/:id', async (req, res, next) => {
+router.get('/:id', autenticarOpcional, [param('id').isInt({ min: 1 }), validarRequest], async (req, res, next) => {
     try {
-        const resena = await ResenaModel.obtenerPorId(req.params.id);
-        if (!resena) {
+        const visibility = req.user?.role === 'administrador' ? '' : " AND p.estado = 'aprobada'";
+        const [rows] = await pool.execute(`${reviewSelect} WHERE r.id = ?${visibility}`, [req.params.id]);
+        if (!rows.length) {
             return res.status(404).json({ error: 'Reseña no encontrada' });
         }
-        res.json(resena);
+        return res.json(rows[0]);
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 
-// 3. CREAR RESEÑA (Protegido con autorizarUsuario)
-resenasRouter.post('/', autorizarUsuario, async (req, res, next) => {
+router.post('/', autenticar, [
+    body('idpelicula').isInt({ min: 1 }).toInt(),
+    body('titulo').trim().notEmpty().isLength({ max: 150 }),
+    body('comentarios').trim().notEmpty().isLength({ max: 5000 }),
+    body('puntaje').isInt({ min: 1, max: 10 }).toInt(),
+    validarRequest
+], async (req, res, next) => {
     try {
-        const { idpelicula, comentarios, punteo } = req.body;
-        
-        // El idusuario NUNCA debe venir del body del cliente por seguridad.
-        // Lo sacamos de la cookie firmada gracias al middleware 'autorizarUsuario'.
-        const idusuario = req.user.id; 
-
-        if (!idpelicula || !comentarios || !punteo) {
-            return res.status(400).json({ error: 'Película, comentarios y punteo son obligatorios' });
-        }
-
-
-        const nuevaResena = new ResenaModel({ 
-            idpelicula, 
-            idusuario, 
-            comentarios, 
-            punteo 
+        const result = await crearResena({
+            ...req.body,
+            idusuario: req.user.id
         });
-        
-        const resultado = await nuevaResena.guardar();
-        res.status(201).json(resultado);
-
+        return res.status(201).json(result);
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 
-
-resenasRouter.put('/:id', autorizarUsuario, async (req, res, next) => {
+router.put('/:id', autenticar, [
+    param('id').isInt({ min: 1 }),
+    body('titulo').trim().notEmpty().isLength({ max: 150 }),
+    body('comentarios').trim().notEmpty().isLength({ max: 5000 }),
+    body('puntaje').isInt({ min: 1, max: 10 }).toInt(),
+    validarRequest
+], async (req, res, next) => {
     try {
-        const { idpelicula, comentarios, punteo } = req.body;
-        const idusuario = req.user.id; 
-
-        const resenaActualizar = new ResenaModel({ idpelicula, idusuario, comentarios, punteo });
-        const resultado = await resenaActualizar.actualizar(req.params.id);
-
-        if (!resultado.success) {
-            return res.status(404).json({ error: resultado.mensaje });
-        }
-
-        res.json(resultado);
+        const result = await actualizarResena({
+            ...req.body,
+            id: Number(req.params.id),
+            idusuario: req.user.id,
+            role: req.user.role
+        });
+        return res.json(result);
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 
-
-resenasRouter.delete('/:id', autorizarUsuario, async (req, res, next) => {
+router.delete('/:id', autenticar, [param('id').isInt({ min: 1 }), validarRequest], async (req, res, next) => {
     try {
-        const resultado = await ResenaModel.eliminar(req.params.id);
-        
-        if (!resultado.success) {
-            return res.status(404).json({ error: resultado.mensaje });
-        }
-
-        res.json(resultado);
+        const result = await eliminarResena({
+            id: Number(req.params.id),
+            idusuario: req.user.id,
+            role: req.user.role
+        });
+        return res.json(result);
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 
-export default resenasRouter;
+router.post('/:id/votos', autenticar, [
+    param('id').isInt({ min: 1 }),
+    body('voto').isIn(['like', 'dislike']).withMessage('El voto debe ser like o dislike'),
+    validarRequest
+], async (req, res, next) => {
+    try {
+        const result = await registrarVoto({
+            idresena: Number(req.params.id),
+            idusuario: req.user.id,
+            voto: req.body.voto
+        });
+        return res.json(result);
+    } catch (error) {
+        return next(error);
+    }
+});
+
+router.delete('/:id/votos', autenticar, [param('id').isInt({ min: 1 }), validarRequest], async (req, res, next) => {
+    try {
+        const result = await eliminarVoto({
+            idresena: Number(req.params.id),
+            idusuario: req.user.id
+        });
+        return res.json(result);
+    } catch (error) {
+        return next(error);
+    }
+});
+
+export default router;

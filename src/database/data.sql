@@ -1,3 +1,4 @@
+USE KARAN;
 
 -- ==========================================
 -- 1. INSERTAR id (Más de 50 registros)
@@ -232,9 +233,11 @@ INSERT INTO peliculas (idpelicula, titulo, sinopsis, anio_estreno, duracion_minu
 
 
 -- ==========================================
+UPDATE peliculas SET estado = 'aprobada' WHERE creada_por IS NULL;
+
 -- 5. INSERTAR USUARIOS (Más de 50 registros)
 -- ==========================================
-INSERT INTO usuarios (id, nombre, apellido,  email, telefono, contrasena, avatar_url) VALUES 
+INSERT INTO usuarios (id, nombre, email, telefono, contrasena, avatar_url) VALUES
 (1, 'Irma Arias', 'irma@gmail.com', '55551234', '123456', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'),
 (2, 'Usuario Demo', 'demo@gmail.com', '55555678', '123456', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200'),
 (3, 'Carlos Pérez', 'carlos@gmail.com', '55559876', '123456', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200'),
@@ -293,55 +296,64 @@ INSERT INTO usuarios (id, nombre, apellido,  email, telefono, contrasena, avatar
 -- 6. INSERTAR RESEÑAS (Más de 50 registros)
 -- ==========================================
 INSERT INTO resenas (id, idpelicula, idusuario, comentarios, fechaResena, puntaje) VALUES 
-(1, 1, 1, '¡Una obra maestra de la ciencia ficción y el cine geek!', '2026-03-30', 9.8),
-(2, 2, 2, 'Increíbles efectos visuales y una historia muy atrapante.', '2026-03-31', 9.5),
-(3, 3, 3, 'Hermosa animación y un mensaje muy profundo.', '2026-04-01', 9.2),
-(4, 4, 4, 'Una de las mejores películas del espacio de la historia.', '2026-04-02', 9.9),
-(5, 5, 5, 'Me encantó la mezcla de fantasía y drama histórico.', '2026-04-03', 9.0),
-(6, 6, 6, 'El mejor Guasón del cine, excelente película.', '2026-04-04', 10.0),
-(7, 7, 7, 'Muy emotiva y larga, pero vale cada minuto.', '2026-04-05', 8.8),
-(8, 8, 8, 'Los visuales son increíbles para su época.', '2026-04-06', 8.5),
-(9, 9, 9, 'Diálogos geniales y mucha acción.', '2026-04-07', 9.4),
-(10, 10, 10, 'Una épica romana imperdible.', '2026-04-08', 9.6),
-(11, 11, 11, 'Los dinosaurios se ven muy reales.', '2026-04-09', 9.1),
-(12, 12, 12, 'Un clásico absoluto que marcó la cultura pop.', '2026-04-10', 9.7),
-(13, 13, 13, 'La mejor adaptación de fantasía jamás hecha.', '2026-04-11', 10.0),
-(14, 14, 14, 'Una crítica a la sociedad moderna excelente.', '2026-04-12', 9.3),
-(15, 15, 15, 'Una historia de vida hermosa y conmovedora.', '2026-04-13', 9.5),
-(16, 16, 16, 'La música es simplemente mágica.', '2026-04-14', 8.9),
-(17, 17, 17, 'La tensión en esta película es brutal.', '2026-04-15', 9.4),
-(18, 18, 18, 'Una secuela digna que respeta al original.', '2026-04-16', 9.1),
-(19, 19, 19, 'Impresionante construcción de mundo.', '2026-04-17', 9.6),
-(20, 20, 20, 'El estilo visual animado es innovador.', '2026-04-18', 9.8),
-(21, 21, 21, 'Una historia de amor preciosa.', '2026-04-19', 9.2),
-(22, 22, 22, 'Cyberpunk clásico en su máxima expresión.', '2026-04-20', 8.7),
-(23, 23, 23, 'La naturaleza y la fantasía en perfecta armonía.', '2026-04-21', 9.5),
-(24, 24, 24, 'Cine de mafiosos en lo más alto.', '2026-04-22', 10.0),
-(25, 25, 25, 'Terror psicológico de primer nivel.', '2026-04-23', 9.0),
-(26, 26, 26, 'El terror en el espacio definitivo.', '2026-04-24', 9.4),
-(27, 27, 27, 'Suspenso y paranoia pura.', '2026-04-25', 9.1),
-(28, 28, 28, 'Mucha aventura y acción prehistórica.', '2026-04-26', 8.2),
-(29, 29, 29, 'Inició la era de la animación por computadora.', '2026-04-27', 9.5),
-(30, 30, 30, 'Una aventura submarina inolvidable.', '2026-04-28', 9.3),
-(31, 31, 31, 'Los primeros 10 minutos te hacen llorar seguro.', '2026-04-29', 9.7),
-(32, 32, 32, 'Un robot tierno y una gran moraleja ambiental.', '2026-04-30', 9.6),
-(33, 33, 33, 'El cierre perfecto para una gran saga.', '2026-05-01', 9.8),
-(34, 34, 34, 'Inició todo el universo de Marvel con estilo.', '2026-05-02', 8.9),
-(35, 35, 35, 'Una despedida muy emotiva y oscura.', '2026-05-03', 9.5),
-(36, 36, 36, 'Una actuación impresionante de Joaquin Phoenix.', '2026-05-04', 9.4),
-(37, 37, 37, 'Acción sin descanso de principio a fin.', '2026-05-05', 8.8),
-(38, 38, 38, 'Locura sobre ruedas impresionante.', '2026-05-06', 9.2),
-(39, 39, 39, 'Efectos especiales adelantados a su época.', '2026-05-07', 9.5),
-(40, 40, 40, 'Viajes en el tiempo divertidísimos.', '2026-05-08', 9.6),
-(41, 41, 41, 'Aventura y piratas con mucha comedia.', '2026-05-09', 8.6),
-(42, 42, 42, 'El inicio de la magia en Hogwarts.', '2026-05-10', 9.1),
-(43, 43, 43, 'Un cierre épico y lleno de emociones.', '2026-05-11', 9.9),
-(44, 44, 44, 'Una comedia visualmente hermosa y única.', '2026-05-12', 8.8),
-(45, 45, 45, 'Una crítica social brillante y muy original.', '2026-05-13', 9.7),
-(46, 46, 46, 'Sustos genuinos y muy bien logrados.', '2026-05-14', 8.5),
-(47, 47, 47, 'Un giro final que no te esperas.', '2026-05-15', 9.0),
-(48, 48, 48, 'Una investigación detectivesca muy oscura.', '2026-05-16', 9.4),
-(49, 49, 49, 'Un thriller psicológico brillante.', '2026-05-17', 9.5),
-(50, 50, 50, 'Misterios dentro de un hospital psiquiátrico.', '2026-05-18', 9.1),
-(51, 51, 51, 'Una mente brillante atrapada en sus recuerdos.', '2026-05-19', 9.2),
-(52, 52, 52, 'Un duelo mental fascinante entre dos magos.', '2026-05-20', 9.6);
+(1, 1, 1, '¡Una obra maestra de la ciencia ficción y el cine geek!', '2026-03-30', 10),
+(2, 2, 2, 'Increíbles efectos visuales y una historia muy atrapante.', '2026-03-31', 10),
+(3, 3, 3, 'Hermosa animación y un mensaje muy profundo.', '2026-04-01', 9),
+(4, 4, 4, 'Una de las mejores películas del espacio de la historia.', '2026-04-02', 10),
+(5, 5, 5, 'Me encantó la mezcla de fantasía y drama histórico.', '2026-04-03', 9),
+(6, 6, 6, 'El mejor Guasón del cine, excelente película.', '2026-04-04', 10),
+(7, 7, 7, 'Muy emotiva y larga, pero vale cada minuto.', '2026-04-05', 9),
+(8, 8, 8, 'Los visuales son increíbles para su época.', '2026-04-06', 9),
+(9, 9, 9, 'Diálogos geniales y mucha acción.', '2026-04-07', 9),
+(10, 10, 10, 'Una épica romana imperdible.', '2026-04-08', 10),
+(11, 11, 11, 'Los dinosaurios se ven muy reales.', '2026-04-09', 9),
+(12, 12, 12, 'Un clásico absoluto que marcó la cultura pop.', '2026-04-10', 10),
+(13, 13, 13, 'La mejor adaptación de fantasía jamás hecha.', '2026-04-11', 10),
+(14, 14, 14, 'Una crítica a la sociedad moderna excelente.', '2026-04-12', 9),
+(15, 15, 15, 'Una historia de vida hermosa y conmovedora.', '2026-04-13', 10),
+(16, 16, 16, 'La música es simplemente mágica.', '2026-04-14', 9),
+(17, 17, 17, 'La tensión en esta película es brutal.', '2026-04-15', 9),
+(18, 18, 18, 'Una secuela digna que respeta al original.', '2026-04-16', 9),
+(19, 19, 19, 'Impresionante construcción de mundo.', '2026-04-17', 10),
+(20, 20, 20, 'El estilo visual animado es innovador.', '2026-04-18', 10),
+(21, 21, 21, 'Una historia de amor preciosa.', '2026-04-19', 9),
+(22, 22, 22, 'Cyberpunk clásico en su máxima expresión.', '2026-04-20', 9),
+(23, 23, 23, 'La naturaleza y la fantasía en perfecta armonía.', '2026-04-21', 10),
+(24, 24, 24, 'Cine de mafiosos en lo más alto.', '2026-04-22', 10),
+(25, 25, 25, 'Terror psicológico de primer nivel.', '2026-04-23', 9),
+(26, 26, 26, 'El terror en el espacio definitivo.', '2026-04-24', 9),
+(27, 27, 27, 'Suspenso y paranoia pura.', '2026-04-25', 9),
+(28, 28, 28, 'Mucha aventura y acción prehistórica.', '2026-04-26', 8),
+(29, 29, 29, 'Inició la era de la animación por computadora.', '2026-04-27', 10),
+(30, 30, 30, 'Una aventura submarina inolvidable.', '2026-04-28', 9),
+(31, 31, 31, 'Los primeros 10 minutos te hacen llorar seguro.', '2026-04-29', 10),
+(32, 32, 32, 'Un robot tierno y una gran moraleja ambiental.', '2026-04-30', 10),
+(33, 33, 33, 'El cierre perfecto para una gran saga.', '2026-05-01', 10),
+(34, 34, 34, 'Inició todo el universo de Marvel con estilo.', '2026-05-02', 9),
+(35, 35, 35, 'Una despedida muy emotiva y oscura.', '2026-05-03', 10),
+(36, 36, 36, 'Una actuación impresionante de Joaquin Phoenix.', '2026-05-04', 9),
+(37, 37, 37, 'Acción sin descanso de principio a fin.', '2026-05-05', 9),
+(38, 38, 38, 'Locura sobre ruedas impresionante.', '2026-05-06', 9),
+(39, 39, 39, 'Efectos especiales adelantados a su época.', '2026-05-07', 10),
+(40, 40, 40, 'Viajes en el tiempo divertidísimos.', '2026-05-08', 10),
+(41, 41, 41, 'Aventura y piratas con mucha comedia.', '2026-05-09', 9),
+(42, 42, 42, 'El inicio de la magia en Hogwarts.', '2026-05-10', 9),
+(43, 43, 43, 'Un cierre épico y lleno de emociones.', '2026-05-11', 10),
+(44, 44, 44, 'Una comedia visualmente hermosa y única.', '2026-05-12', 9),
+(45, 45, 45, 'Una crítica social brillante y muy original.', '2026-05-13', 10),
+(46, 46, 46, 'Sustos genuinos y muy bien logrados.', '2026-05-14', 9),
+(47, 47, 47, 'Un giro final que no te esperas.', '2026-05-15', 9),
+(48, 48, 48, 'Una investigación detectivesca muy oscura.', '2026-05-16', 9),
+(49, 49, 49, 'Un thriller psicológico brillante.', '2026-05-17', 10),
+(50, 50, 50, 'Misterios dentro de un hospital psiquiátrico.', '2026-05-18', 9),
+(51, 51, 51, 'Una mente brillante atrapada en sus recuerdos.', '2026-05-19', 9),
+(52, 52, 52, 'Un duelo mental fascinante entre dos magos.', '2026-05-20', 10);
+
+UPDATE peliculas p
+SET p.calificacion_promedio = COALESCE(
+        (SELECT AVG(r.puntaje) FROM resenas r WHERE r.idpelicula = p.idpelicula),
+        0
+    ),
+    p.total_resenas = (
+        SELECT COUNT(*) FROM resenas r WHERE r.idpelicula = p.idpelicula
+    );
