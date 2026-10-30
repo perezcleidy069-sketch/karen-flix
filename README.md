@@ -1,6 +1,6 @@
-# Karen Flix — Backend
+# Karen Flix — Backend API
 
-API REST para una plataforma de películas y series. Está construida con Node.js, Express y MySQL, con rutas versionadas, autenticación JWT y separación entre routers, controladores, modelos, servicios y utilidades.
+API REST para una plataforma de películas y series. Este repositorio contiene únicamente el backend; el frontend se desarrolla y consume la API desde un repositorio independiente. Está construida con Node.js, Express y MySQL, con rutas versionadas, autenticación JWT y separación entre routers, controladores, modelos, servicios y utilidades.
 
 ## Patrones de diseño
 
@@ -105,7 +105,3 @@ La respuesta indica `estado: "pendiente"` para usuarios y `estado: "aprobada"` p
 ## Swagger
 
 La especificación OpenAPI y la interfaz interactiva están disponibles en `/api-docs`.
-
-## Frontend
-
-Repositorio frontend independiente: **[URL del repositorio del frontend]** (pendiente de definir).
