@@ -1,8 +1,8 @@
 
 import { Router } from 'express';
 import DirectorModel from '../models/director.model.js'
-import autorrizarUsuario from '../middlewares/usuario.middlewares';
-import autorizarAdministrador from  '../middlewares/administrar.middlware';
+import autorrizarUsuario from '../middlewares/usuario.middlewares.js';
+import autorizarAdministrador from  '../middlewares/administrar.middlware.js';
 
 const directoresRouter = Router();
 
