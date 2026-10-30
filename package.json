@@ -18,7 +18,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "nodemon server.js --quiet",
     "start": "node server.js",
     "test": "node --test"
   },
