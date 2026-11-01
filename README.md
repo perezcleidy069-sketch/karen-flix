@@ -2,6 +2,12 @@
 
 API REST para una plataforma de películas y series. Este repositorio contiene únicamente el backend; el frontend se desarrolla y consume la API desde un repositorio independiente. Está construida con Node.js, Express y MySQL, con rutas versionadas, autenticación JWT y separación entre routers, controladores, modelos, servicios y utilidades.
 
+## Diagrama entidad-relación
+
+![Diagrama de la base de datos de Karen Flix](./src/imagenes/diagrama_greekrank.png)
+
+El esquema actual también incluye el campo `usuarios.solicitud_admin`, que no aparece en esta imagen.
+
 ## Patrones de diseño
 
 - **Factory:** `src/factory/usuario.factory.js` construye los datos de registro del usuario con valores opcionales predeterminados y asigna siempre el rol `usuario`, evitando que el registro público elija el rol. La ruta de registro lo usa antes de guardar en MySQL.
@@ -122,3 +128,16 @@ La respuesta indica `estado: "pendiente"` para usuarios y `estado: "aprobada"` p
 ## Swagger
 
 La especificación OpenAPI y la interfaz interactiva están disponibles en `/api-docs`.
+
+
+## APLICACION
+- LINKI: https://perezcleidy069-sketch.github.io/greekrank/
+
+## VIDEO Y PDF
+- Video:
+- PDF:
+
+## COLABORADORES
+- Irma Yaneht Arias García
+- Joseph Fernando Ramirez 
+- Cleidy Priscila Pérez Caisa
