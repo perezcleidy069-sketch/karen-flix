@@ -1,0 +1,1 @@
+export { soloAdministrador as default } from './auth.middleware.js';

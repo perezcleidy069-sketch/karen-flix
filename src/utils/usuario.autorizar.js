@@ -1,0 +1,1 @@
+export { autenticar as default } from '../middlewares/auth.middleware.js';
