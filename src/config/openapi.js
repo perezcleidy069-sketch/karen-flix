@@ -86,7 +86,15 @@ export default {
                     email: { type: 'string', format: 'email' },
                     contrasena: { type: 'string', minLength: 8, maxLength: 72 },
                     telefono: { type: 'string', maxLength: 20 },
-                    avatar_url: { type: 'string', format: 'uri' }
+                    avatar_url: { type: 'string', format: 'uri' },
+                    solicitar_administrador: {
+                        type: 'boolean',
+                        description: 'Solicita revisión; nunca asigna el rol sin aprobación de un administrador'
+                    },
+                    codigo_administrador: {
+                        type: 'string',
+                        description: 'Código requerido cuando solicitar_administrador es true'
+                    }
                 }
             },
             LoginInput: {
@@ -94,7 +102,11 @@ export default {
                 required: ['email', 'contrasena'],
                 properties: {
                     email: { type: 'string', format: 'email' },
-                    contrasena: { type: 'string', maxLength: 72 }
+                    contrasena: { type: 'string', maxLength: 72 },
+                    codigo_administrador: {
+                        type: 'string',
+                        description: 'Requerido al iniciar sesión con una cuenta administradora'
+                    }
                 }
             },
             LoginResponse: {
@@ -132,7 +144,10 @@ export default {
                         estado: { type: 'string', enum: ['pendiente', 'aprobada', 'rechazada'] },
                         calificacion_promedio: { type: 'number' },
                         total_resenas: { type: 'integer' },
-                        ranking: { type: 'number' }
+                        ranking: {
+                            type: 'number',
+                            description: 'Promedio de puntuaciones + likes de reseñas - dislikes de reseñas'
+                        }
                     } }
                 ]
             },
@@ -211,7 +226,13 @@ export default {
             post: {
                 tags: ['Auth'], summary: 'Registrar una cuenta (rol usuario)',
                 requestBody: jsonRequest({ $ref: '#/components/schemas/RegisterInput' }),
-                responses: { 201: response('Cuenta registrada'), 400: response('Datos inválidos'), 409: response('Correo duplicado') }
+                responses: {
+                    201: response('Cuenta registrada'),
+                    400: response('Datos inválidos'),
+                    403: response('Código de administrador incorrecto'),
+                    409: response('Correo duplicado'),
+                    503: response('Solicitudes de administrador no configuradas')
+                }
             }
         },
         '/auth/login': {
@@ -220,12 +241,34 @@ export default {
                 requestBody: jsonRequest({ $ref: '#/components/schemas/LoginInput' }),
                 responses: {
                     200: response('Token de acceso', { $ref: '#/components/schemas/LoginResponse' }),
-                    401: response('Credenciales incorrectas')
+                    401: response('Credenciales incorrectas'),
+                    403: response('Código de administrador obligatorio o incorrecto'),
+                    503: response('Acceso de administrador no configurado')
                 }
             }
         },
         '/auth/me': {
             get: secured({ tags: ['Auth'], summary: 'Consultar usuario autenticado', responses: { 200: response('Usuario actual'), 401: response('Token inválido') } })
+        },
+        '/usuarios/solicitudes-administrador': {
+            get: secured({
+                tags: ['Auth'],
+                summary: 'Listar solicitudes de administrador pendientes',
+                responses: { 200: response('Solicitudes pendientes'), 403: response('Solo administradores') }
+            })
+        },
+        '/usuarios/solicitudes-administrador/{id}': {
+            parameters: [idParameter],
+            patch: secured({
+                tags: ['Auth'],
+                summary: 'Aprobar o rechazar una solicitud de administrador',
+                requestBody: jsonRequest({
+                    type: 'object',
+                    required: ['estado'],
+                    properties: { estado: { type: 'string', enum: ['aprobada', 'rechazada'] } }
+                }),
+                responses: { 200: response('Solicitud resuelta'), 403: response('Solo administradores'), 409: response('Solicitud ya atendida') }
+            })
         },
         '/peliculas': {
             get: {
@@ -248,7 +291,7 @@ export default {
         },
         '/peliculas/{idpelicula}': {
             parameters: [{ ...idParameter, name: 'idpelicula' }],
-            get: { tags: ['Películas'], summary: 'Detalle y reseñas de una película', responses: { 200: response('Película'), 404: response('No encontrada') } },
+            get: { tags: ['Películas'], summary: 'Detalle, reseñas y permiso de gestión de una película', responses: { 200: response('Película; incluye puede_gestionar para usuarios autenticados'), 404: response('No encontrada') } },
             put: secured({
                 tags: ['Películas'], summary: 'Actualizar una película propia o administrar como admin',
                 requestBody: jsonRequest({ $ref: '#/components/schemas/MovieInput' }),

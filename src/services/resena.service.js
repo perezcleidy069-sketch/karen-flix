@@ -88,7 +88,7 @@ export function registrarVoto({ idresena, idusuario, voto }) {
         if (!review) {
             throw crearErrorHttp(404, 'Reseña no encontrada');
         }
-        if (review.idusuario === idusuario) {
+        if (Number(review.idusuario) === Number(idusuario)) {
             throw crearErrorHttp(403, 'No puedes votar en tu propia reseña');
         }
         await connection.execute(

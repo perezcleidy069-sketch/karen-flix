@@ -2,17 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calcularRanking } from '../src/utils/ranking.js';
 
-test('combina rating, balance de votos y frescura', () => {
-    assert.equal(calcularRanking({ promedio: 10, likes: 10, dislikes: 0, diasDesdeResena: 0 }), 10);
+test('suma el promedio de puntuaciones y likes, y resta dislikes', () => {
+    assert.equal(calcularRanking({ promedio: 8.5, likes: 4, dislikes: 1 }), 11.5);
 });
 
-test('limita el balance de votos y no premia fechas futuras', () => {
-    assert.equal(calcularRanking({ promedio: 10, likes: 100, dislikes: 0, diasDesdeResena: -10 }), 10);
-});
-
-test('la frescura disminuye con reseñas antiguas', () => {
+test('los dislikes reducen el ranking', () => {
     assert.ok(
-        calcularRanking({ promedio: 8, diasDesdeResena: 365 }) <
-        calcularRanking({ promedio: 8, diasDesdeResena: 0 })
+        calcularRanking({ promedio: 8, likes: 2, dislikes: 3 }) <
+        calcularRanking({ promedio: 8, likes: 3, dislikes: 2 })
     );
+});
+
+test('una película sin votos conserva el promedio de sus reseñas', () => {
+    assert.equal(calcularRanking({ promedio: 7.25 }), 7.25);
 });

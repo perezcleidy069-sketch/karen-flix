@@ -19,7 +19,11 @@ passport.use(new JwtStrategy({
         if (!user || !user.activo) {
             return done(null, false);
         }
-        return done(null, user);
+        const authenticatedUser = { ...user };
+        if (authenticatedUser.role === 'administrador' && payload.admin_code_verified !== true) {
+            authenticatedUser.role = 'usuario';
+        }
+        return done(null, authenticatedUser);
     } catch (error) {
         return done(error, false);
     }

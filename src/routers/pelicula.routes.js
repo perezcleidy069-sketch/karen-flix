@@ -23,25 +23,16 @@ const movieSummary = `
            p.idcategoria, c.nombre AS categoria, p.iddirector,
            d.nombre AS director, d.apellido AS apellido_director,
            p.imagen, p.trailer_url, p.tipo, p.estado, p.created_at,
-           r.fecha_ultima_resena,
            p.calificacion_promedio,
            p.total_resenas,
            COALESCE(v.likes, 0) AS likes, COALESCE(v.dislikes, 0) AS dislikes,
            ROUND(
-               p.calificacion_promedio * 0.7
-               + LEAST(10, GREATEST(-10, COALESCE(v.likes, 0) - COALESCE(v.dislikes, 0))) * 0.2
-               + COALESCE(r.recencia, 0) * 0.1,
+               p.calificacion_promedio + COALESCE(v.likes, 0) - COALESCE(v.dislikes, 0),
                2
            ) AS ranking
     FROM peliculas p
     INNER JOIN categorias c ON c.id = p.idcategoria
     LEFT JOIN directores d ON d.id = p.iddirector
-    LEFT JOIN (
-        SELECT idpelicula,
-               MAX(fechaResena) AS fecha_ultima_resena,
-               10 * EXP(-GREATEST(0, DATEDIFF(CURDATE(), MAX(fechaResena))) / 365) AS recencia
-        FROM resenas GROUP BY idpelicula
-    ) r ON r.idpelicula = p.idpelicula
     LEFT JOIN (
         SELECT re.idpelicula,
                SUM(vr.voto = 'like') AS likes,
@@ -148,26 +139,33 @@ router.get('/:idpelicula', autenticarOpcional, [
         if (!movies.length) {
             return res.status(404).json({ error: 'Película no encontrada' });
         }
-        const [reviews] = await pool.execute(
-            `SELECT r.id, r.titulo, r.comentarios, r.puntaje, r.fechaResena,
-                    u.id AS idusuario, u.nombre AS usuario,
-                    (SELECT COUNT(*) FROM resena_votos WHERE idresena = r.id AND voto = 'like') AS likes,
-                    (SELECT COUNT(*) FROM resena_votos WHERE idresena = r.id AND voto = 'dislike') AS dislikes
-             FROM resenas r
-             INNER JOIN usuarios u ON u.id = r.idusuario
-             WHERE r.idpelicula = ?
-             ORDER BY r.fechaResena DESC`,
-            [req.params.idpelicula]
-        );
+        const [[reviews], [ownership]] = await Promise.all([
+            pool.execute(
+                `SELECT r.id, r.titulo, r.comentarios, r.puntaje, r.fechaResena,
+                        u.id AS idusuario, u.nombre AS usuario,
+                        (SELECT COUNT(*) FROM resena_votos WHERE idresena = r.id AND voto = 'like') AS likes,
+                        (SELECT COUNT(*) FROM resena_votos WHERE idresena = r.id AND voto = 'dislike') AS dislikes
+                 FROM resenas r
+                 INNER JOIN usuarios u ON u.id = r.idusuario
+                 WHERE r.idpelicula = ?
+                 ORDER BY r.fechaResena DESC`,
+                [req.params.idpelicula]
+            ),
+            pool.execute(
+                'SELECT creada_por FROM peliculas WHERE idpelicula = ?',
+                [req.params.idpelicula]
+            )
+        ]);
         return res.json({
             ...movies[0],
+            puede_editar: Boolean(req.user && (
+                req.user.role === 'administrador' ||
+                Number(ownership[0]?.creada_por) === Number(req.user.id)
+            )),
             ranking: calcularRanking({
                 promedio: movies[0].calificacion_promedio,
                 likes: movies[0].likes,
-                dislikes: movies[0].dislikes,
-                diasDesdeResena: movies[0].fecha_ultima_resena
-                    ? Math.floor((Date.now() - new Date(movies[0].fecha_ultima_resena).getTime()) / 86400000)
-                    : 36500
+                dislikes: movies[0].dislikes
             }),
             resenas: reviews
         });

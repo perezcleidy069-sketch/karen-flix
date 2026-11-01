@@ -22,10 +22,11 @@ PORT=3000
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=tu_contrasena
-DB_NAME=KARAN
+DB_NAME=greekrang
 DB_PORT=3306
 JWT_SECRET=usa-una-clave-aleatoria-de-al-menos-32-caracteres
 JWT_EXPIRES_IN=1d
+ADMIN_REQUEST_CODE=003
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
@@ -35,16 +36,20 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 
 1. Instala dependencias: `npm install`.
 2. Crea la base y tablas ejecutando `src/database/schema.sql`.
-3. Opcionalmente carga datos de ejemplo ejecutando `src/database/data.sql`.
+3. Para mostrar los datos de ejemplo, ejecuta una vez `src/database/data.sql` después del esquema. El backend no ejecuta este archivo automáticamente al iniciar. No vuelvas a ejecutar el archivo completo sobre los mismos datos, porque los catálogos y las películas tienen IDs y nombres únicos.
 4. Inicia en desarrollo: `npm run dev`. Para producción: `npm start`.
 5. Comprueba el servicio en `GET /api/v1/health`.
 
 El esquema está preparado para una instalación nueva. `CREATE TABLE IF NOT EXISTS` no transforma tablas de instalaciones anteriores; respalda y migra esos datos antes de aplicar esta estructura.
 
-El registro público crea solamente usuarios. Para designar un administrador, actualiza el rol de una cuenta desde MySQL:
+Si ya tienes instalada la base de datos, ejecuta una sola vez `src/database/migration_solicitud_admin.sql` en MySQL Workbench para añadir el estado de solicitudes de administrador. No la ejecutes si la columna `solicitud_admin` ya existe.
+
+Si ya importaste el catálogo pero faltan reseñas o votos, ejecuta únicamente desde `INSERT IGNORE INTO resenas` hasta el final de `src/database/data.sql`. Ese bloque requiere que los 52 usuarios de demostración ya existan y agrega reseñas y votos de ejemplo sin duplicarlos.
+
+El registro público siempre crea una cuenta con rol `usuario`. Si se solicita el rol de administrador, la solicitud queda pendiente hasta que un administrador la apruebe desde el panel de GeekRank. Al iniciar sesión, las cuentas con rol `administrador` también deben enviar `codigo_administrador` con el valor configurado en `ADMIN_REQUEST_CODE`; esto no concede el rol a cuentas normales. Para designar manualmente el primer administrador, actualiza su rol desde MySQL:
 
 ```sql
-UPDATE KARAN.usuarios SET `role` = 'administrador' WHERE email = 'admin@ejemplo.com';
+UPDATE greekrang.usuarios SET `role` = 'administrador' WHERE email = 'admin@ejemplo.com';
 ```
 
 Los usuarios de demostración existentes en `data.sql` conservan su contraseña inicial de ejemplo. En el primer inicio de sesión exitoso, la API la migra a bcrypt. Las cuentas nuevas siempre se guardan con bcrypt.
@@ -63,9 +68,11 @@ La API actual está bajo `/api/v1`. Los prefijos anteriores `/api/...` se mantie
 
 | Método | Endpoint | Acceso |
 |---|---|---|
-| `POST` | `/api/v1/auth/register` | Público; crea un usuario |
+| `POST` | `/api/v1/auth/register` | Público; crea usuario y opcionalmente solicita rol de administrador |
 | `POST` | `/api/v1/auth/login` | Público; devuelve JWT |
 | `GET` | `/api/v1/auth/me` | Autenticado |
+| `GET` | `/api/v1/usuarios/solicitudes-administrador` | Administrador |
+| `PATCH` | `/api/v1/usuarios/solicitudes-administrador/:id` | Administrador; aprueba o rechaza |
 | `GET` | `/api/v1/peliculas?page=1&limit=20&categoria=1&orden=popularidad` | Público; solo aprobadas |
 | `POST` | `/api/v1/peliculas` | Autenticado; propuesta pendiente para usuarios, aprobación directa para administradores |
 | `PATCH` | `/api/v1/peliculas/:idpelicula/aprobacion` | Administrador |
@@ -77,7 +84,7 @@ La API actual está bajo `/api/v1`. Los prefijos anteriores `/api/...` se mantie
 
 Las reseñas aceptan `titulo`, `comentarios`, `idpelicula` y `puntaje` entero entre 1 y 10. Los votos únicos se guardan en `resena_votos`. Crear, editar o eliminar reseñas recalcula dentro de una transacción el promedio y total de reseñas de la película.
 
-El ranking pondera el promedio (70 %), el balance limitado de likes/dislikes (20 %) y la frescura de reseñas (10 %). Para ordenamiento se admiten `ranking`, `popularidad` y `recientes`; la respuesta del listado incluye `data` y metadatos de `pagination`.
+El ranking se calcula como promedio de puntuaciones más likes menos dislikes. Para ordenamiento se admiten `ranking`, `popularidad` y `recientes`; la respuesta del listado incluye `data` y metadatos de `pagination`.
 
 ### Ejemplos de uso
 
@@ -87,8 +94,18 @@ Registro:
 POST /api/v1/auth/register
 Content-Type: application/json
 
-{"nombre":"Ana","email":"ana@example.com","contrasena":"ClaveSegura123"}
+{"nombre":"Ana","email":"ana@example.com","contrasena":"ClaveSegura123","solicitar_administrador":true,"codigo_administrador":"003"}
 ```
+
+`solicitar_administrador` es opcional. Cuando es `true`, también se exige el código configurado en `ADMIN_REQUEST_CODE`; la cuenta se registra como `usuario` y el rol de administrador solo se asigna tras la aprobación de un administrador. Después, para iniciar sesión como administrador, incluye `codigo_administrador` en la petición de login.
+
+Ejemplo de inicio de sesión administrador:
+
+```json
+{"email":"admin@ejemplo.com","contrasena":"ClaveSegura123","codigo_administrador":"003"}
+```
+
+Los tokens de administrador emitidos antes de este requisito no conservan permisos administrativos; hay que iniciar sesión de nuevo con el código.
 
 Propuesta de película (con token de usuario):
 

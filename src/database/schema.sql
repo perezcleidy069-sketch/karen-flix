@@ -1,7 +1,7 @@
-CREATE DATABASE IF NOT EXISTS karen_flix
+CREATE DATABASE IF NOT EXISTS greekrang
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
-USE karen_flix;
+USE greekrang;
 
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     telefono VARCHAR(20),
     contrasena VARCHAR(250) NOT NULL,
     `role` ENUM('usuario', 'administrador') NOT NULL DEFAULT 'usuario',
+    solicitud_admin ENUM('pendiente', 'aprobada', 'rechazada') DEFAULT NULL,
     activo TINYINT NOT NULL DEFAULT 1,
     avatar_url VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

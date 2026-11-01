@@ -1,4 +1,4 @@
-USE KARAN;
+USE greekrang;
 
 -- ==========================================
 -- 1. INSERTAR id (Más de 50 registros)
@@ -295,7 +295,7 @@ INSERT INTO usuarios (id, nombre, email, telefono, contrasena, avatar_url) VALUE
 -- ==========================================
 -- 6. INSERTAR RESEÑAS (Más de 50 registros)
 -- ==========================================
-INSERT INTO resenas (id, idpelicula, idusuario, comentarios, fechaResena, puntaje) VALUES 
+INSERT IGNORE INTO resenas (id, idpelicula, idusuario, comentarios, fechaResena, puntaje) VALUES
 (1, 1, 1, '¡Una obra maestra de la ciencia ficción y el cine geek!', '2026-03-30', 10),
 (2, 2, 2, 'Increíbles efectos visuales y una historia muy atrapante.', '2026-03-31', 10),
 (3, 3, 3, 'Hermosa animación y un mensaje muy profundo.', '2026-04-01', 9),
@@ -348,6 +348,19 @@ INSERT INTO resenas (id, idpelicula, idusuario, comentarios, fechaResena, puntaj
 (50, 50, 50, 'Misterios dentro de un hospital psiquiátrico.', '2026-05-18', 9),
 (51, 51, 51, 'Una mente brillante atrapada en sus recuerdos.', '2026-05-19', 9),
 (52, 52, 52, 'Un duelo mental fascinante entre dos magos.', '2026-05-20', 10);
+
+-- Votos de ejemplo: cada reseña recibe un like y un dislike de otros usuarios.
+-- INSERT IGNORE permite volver a ejecutar este bloque sin duplicar votos.
+INSERT IGNORE INTO resena_votos (idresena, idusuario, voto)
+SELECT r.id, like_user.id, 'like'
+FROM resenas r
+INNER JOIN usuarios like_user ON like_user.id = MOD(r.idusuario, 52) + 1
+WHERE r.id BETWEEN 1 AND 52
+UNION ALL
+SELECT r.id, dislike_user.id, 'dislike'
+FROM resenas r
+INNER JOIN usuarios dislike_user ON dislike_user.id = MOD(r.idusuario + 1, 52) + 1
+WHERE r.id BETWEEN 1 AND 52;
 
 UPDATE peliculas p
 SET p.calificacion_promedio = COALESCE(
