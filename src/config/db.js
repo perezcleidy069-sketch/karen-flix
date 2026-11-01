@@ -16,5 +16,8 @@ export const pool = mysql.createPool({
     charset: 'utf8mb4',
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    ssl: {
+        rejectUnauthorized: false // Necesario para aceptar el certificado seguro de Aiven
+    }
 });
