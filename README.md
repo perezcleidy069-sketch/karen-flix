@@ -50,6 +50,8 @@ El esquema está preparado para una instalación nueva. `CREATE TABLE IF NOT EXI
 
 Si ya tienes instalada la base de datos, ejecuta una sola vez `src/database/migration_solicitud_admin.sql` en MySQL Workbench para añadir el estado de solicitudes de administrador. No la ejecutes si la columna `solicitud_admin` ya existe.
 
+Para habilitar los likes independientes de películas en una base existente, ejecuta una sola vez `src/database/migration_pelicula_likes.sql` en MySQL Workbench. En instalaciones nuevas, `src/database/schema.sql` crea esta tabla automáticamente.
+
 Si ya importaste el catálogo pero faltan reseñas o votos, ejecuta únicamente desde `INSERT IGNORE INTO resenas` hasta el final de `src/database/data.sql`. Ese bloque requiere que los 52 usuarios de demostración ya existan y agrega reseñas y votos de ejemplo sin duplicarlos.
 
 El registro público siempre crea una cuenta con rol `usuario`. Si se solicita el rol de administrador, la solicitud queda pendiente hasta que un administrador la apruebe desde el panel de GeekRank. Al iniciar sesión, las cuentas con rol `administrador` también deben enviar `codigo_administrador` con el valor configurado en `ADMIN_REQUEST_CODE`; esto no concede el rol a cuentas normales. Para designar manualmente el primer administrador, actualiza su rol desde MySQL:
@@ -81,6 +83,7 @@ La API actual está bajo `/api/v1`. Los prefijos anteriores `/api/...` se mantie
 | `PATCH` | `/api/v1/usuarios/solicitudes-administrador/:id` | Administrador; aprueba o rechaza |
 | `GET` | `/api/v1/peliculas?page=1&limit=20&categoria=1&orden=popularidad` | Público; solo aprobadas |
 | `POST` | `/api/v1/peliculas` | Autenticado; propuesta pendiente para usuarios, aprobación directa para administradores |
+| `POST`, `DELETE` | `/api/v1/peliculas/:idpelicula/likes` | Autenticado; dar o quitar un like único a una película |
 | `PATCH` | `/api/v1/peliculas/:idpelicula/aprobacion` | Administrador |
 | `GET`, `POST` | `/api/v1/resenas` | Lectura pública; creación autenticada |
 | `PUT`, `DELETE` | `/api/v1/resenas/:id` | Propietario de la reseña o administrador |
@@ -88,9 +91,9 @@ La API actual está bajo `/api/v1`. Los prefijos anteriores `/api/...` se mantie
 | `GET` | `/api/v1/categorias`, `/api/v1/actores`, `/api/v1/directores` | Público |
 | `POST`, `PUT`, `DELETE` | Rutas de categorías, actores y directores | Administrador |
 
-Las reseñas aceptan `titulo`, `comentarios`, `idpelicula` y `puntaje` entero entre 1 y 10. Los votos únicos se guardan en `resena_votos`. Crear, editar o eliminar reseñas recalcula dentro de una transacción el promedio y total de reseñas de la película.
+Las reseñas aceptan `titulo`, `comentarios`, `idpelicula` y `puntaje` entero entre 1 y 10. Los votos únicos de reseñas se guardan en `resena_votos`; los likes a películas, en `pelicula_likes`, y no requieren que el usuario haya publicado o votado una reseña. Crear, editar o eliminar reseñas recalcula dentro de una transacción el promedio y total de reseñas de la película.
 
-El ranking se calcula como promedio de puntuaciones más likes menos dislikes. Para ordenamiento se admiten `ranking`, `popularidad` y `recientes`; la respuesta del listado incluye `data` y metadatos de `pagination`.
+El ranking se calcula como promedio de puntuaciones más likes de reseñas menos dislikes de reseñas. Los likes directos a películas se guardan por separado y no alteran ese puntaje. Para ordenamiento se admiten `ranking`, `popularidad` y `recientes`; la respuesta del listado incluye `data` y metadatos de `pagination`.
 
 ### Ejemplos de uso
 

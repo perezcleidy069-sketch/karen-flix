@@ -144,6 +144,8 @@ export default {
                         estado: { type: 'string', enum: ['pendiente', 'aprobada', 'rechazada'] },
                         calificacion_promedio: { type: 'number' },
                         total_resenas: { type: 'integer' },
+                        likes_pelicula: { type: 'integer' },
+                        me_gusta: { type: 'boolean' },
                         ranking: {
                             type: 'number',
                             description: 'Promedio de puntuaciones + likes de reseñas - dislikes de reseñas'
@@ -298,6 +300,17 @@ export default {
                 responses: { 200: response('Película actualizada'), 403: response('Sin permisos') }
             }),
             delete: secured({ tags: ['Películas'], summary: 'Eliminar película', responses: { 200: response('Película eliminada'), 403: response('Sin permisos') } })
+        },
+        '/peliculas/{idpelicula}/likes': {
+            parameters: [{ ...idParameter, name: 'idpelicula' }],
+            post: secured({
+                tags: ['Películas'], summary: 'Dar Me gusta a una película',
+                responses: { 200: response('Me gusta guardado'), 401: response('Inicia sesión'), 404: response('Película no encontrada') }
+            }),
+            delete: secured({
+                tags: ['Películas'], summary: 'Quitar Me gusta de una película',
+                responses: { 200: response('Me gusta eliminado'), 401: response('Inicia sesión'), 404: response('Película no encontrada') }
+            })
         },
         '/peliculas/{idpelicula}/aprobacion': {
             parameters: [{ ...idParameter, name: 'idpelicula' }],

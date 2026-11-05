@@ -26,6 +26,7 @@ const movieSummary = `
            p.calificacion_promedio,
            p.total_resenas,
            COALESCE(v.likes, 0) AS likes, COALESCE(v.dislikes, 0) AS dislikes,
+           COALESCE(pl.likes, 0) AS likes_pelicula,
            ROUND(
                p.calificacion_promedio + COALESCE(v.likes, 0) - COALESCE(v.dislikes, 0),
                2
@@ -41,7 +42,32 @@ const movieSummary = `
         LEFT JOIN resena_votos vr ON vr.idresena = re.id
         GROUP BY re.idpelicula
     ) v ON v.idpelicula = p.idpelicula
+    LEFT JOIN (
+        SELECT idpelicula, COUNT(*) AS likes
+        FROM pelicula_likes
+        GROUP BY idpelicula
+    ) pl ON pl.idpelicula = p.idpelicula
 `;
+
+async function incluirEstadoLikes(movies, userId) {
+    if (!movies.length) return;
+    if (!userId) {
+        movies.forEach(movie => { movie.me_gusta = false; });
+        return;
+    }
+
+    const movieIds = movies.map(movie => Number(movie.idpelicula));
+    const placeholders = movieIds.map(() => '?').join(', ');
+    const [rows] = await pool.execute(
+        `SELECT idpelicula FROM pelicula_likes
+         WHERE idusuario = ? AND idpelicula IN (${placeholders})`,
+        [userId, ...movieIds]
+    );
+    const likedMovieIds = new Set(rows.map(row => Number(row.idpelicula)));
+    movies.forEach(movie => {
+        movie.me_gusta = likedMovieIds.has(Number(movie.idpelicula));
+    });
+}
 
 async function listarPeliculas(req, res, next, orden = req.query.orden || 'ranking') {
     try {
@@ -82,6 +108,7 @@ async function listarPeliculas(req, res, next, orden = req.query.orden || 'ranki
             `${movieSummary} ${where} ORDER BY ${orderBy}, p.titulo ASC LIMIT ? OFFSET ?`,
             [...values, limit, offset]
         );
+        await incluirEstadoLikes(rows, req.user?.id);
         const total = Number(count.total);
         return res.json({
             data: rows,
@@ -127,6 +154,72 @@ router.get('/', autenticarOpcional, validarFiltrosPeliculas, (req, res, next) =>
 router.get('/ranking', autenticarOpcional, validarFiltrosPeliculas, (req, res, next) => listarPeliculas(req, res, next, 'ranking'));
 router.get('/popularidad', autenticarOpcional, validarFiltrosPeliculas, (req, res, next) => listarPeliculas(req, res, next, 'popularidad'));
 
+router.post('/:idpelicula/likes', autenticar, [
+    param('idpelicula').isInt({ min: 1 }),
+    validarRequest
+], async (req, res, next) => {
+    try {
+        const [movies] = await pool.execute(
+            "SELECT idpelicula FROM peliculas WHERE idpelicula = ? AND estado = 'aprobada'",
+            [req.params.idpelicula]
+        );
+        if (!movies.length) {
+            return res.status(404).json({ error: 'Película no encontrada' });
+        }
+
+        try {
+            await pool.execute(
+                'INSERT INTO pelicula_likes (idpelicula, idusuario) VALUES (?, ?)',
+                [req.params.idpelicula, req.user.id]
+            );
+        } catch (error) {
+            if (error.code !== 'ER_DUP_ENTRY') throw error;
+        }
+        const [[count]] = await pool.execute(
+            'SELECT COUNT(*) AS likes_pelicula FROM pelicula_likes WHERE idpelicula = ?',
+            [req.params.idpelicula]
+        );
+        return res.json({
+            me_gusta: true,
+            likes_pelicula: Number(count.likes_pelicula),
+            mensaje: 'Te gusta esta película'
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+router.delete('/:idpelicula/likes', autenticar, [
+    param('idpelicula').isInt({ min: 1 }),
+    validarRequest
+], async (req, res, next) => {
+    try {
+        const [movies] = await pool.execute(
+            'SELECT idpelicula FROM peliculas WHERE idpelicula = ?',
+            [req.params.idpelicula]
+        );
+        if (!movies.length) {
+            return res.status(404).json({ error: 'Película no encontrada' });
+        }
+
+        await pool.execute(
+            'DELETE FROM pelicula_likes WHERE idpelicula = ? AND idusuario = ?',
+            [req.params.idpelicula, req.user.id]
+        );
+        const [[count]] = await pool.execute(
+            'SELECT COUNT(*) AS likes_pelicula FROM pelicula_likes WHERE idpelicula = ?',
+            [req.params.idpelicula]
+        );
+        return res.json({
+            me_gusta: false,
+            likes_pelicula: Number(count.likes_pelicula),
+            mensaje: 'Quitaste tu Me gusta de esta película'
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
 router.get('/:idpelicula', autenticarOpcional, [
     param('idpelicula').isInt({ min: 1 }),
     validarRequest
@@ -139,6 +232,7 @@ router.get('/:idpelicula', autenticarOpcional, [
         if (!movies.length) {
             return res.status(404).json({ error: 'Película no encontrada' });
         }
+        await incluirEstadoLikes(movies, req.user?.id);
         const [[reviews], [ownership]] = await Promise.all([
             pool.execute(
                 `SELECT r.id, r.titulo, r.comentarios, r.puntaje, r.fechaResena,
