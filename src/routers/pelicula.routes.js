@@ -131,6 +131,54 @@ router.get('/:idpelicula', autenticarOpcional, [
     param('idpelicula').isInt({ min: 1 }),
     validarRequest
 ], async (req, res, next) => {
+router.get('/search', autenticarOpcional, [
+    query('categoria').optional().isInt({ min: 1 }).toInt(),
+    query('minRating').optional().isFloat({ min: 0, max: 10 }).toFloat(),
+    query('yearAfter').optional().isInt({ min: 1888 }).toInt(),
+    validarRequest
+], async (req, res, next) => {
+    try {
+        const { categoria, minRating, yearAfter } = req.query;
+        let conditions = [];
+        let values = [];
+
+        if (req.user?.role !== 'administrador') {
+            conditions.push("p.estado = 'aprobada'");
+        }
+
+        if (categoria) {
+            conditions.push("p.idcategoria = ?");
+            values.push(categoria);
+        }
+
+        if (yearAfter) {
+            conditions.push("p.anio_estreno >= ?");
+            values.push(yearAfter);
+        }
+
+        // Filtro por calificación mínima (sobre calificacion_promedio)
+        if (minRating !== undefined) {
+            conditions.push("p.calificacion_promedio >= ?");
+            values.push(minRating);
+        }
+
+        const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        // Ejecutar la consulta reutilizando tu vista consolidada de películas
+        const [rows] = await pool.execute(
+            `${movieSummary} ${whereClause} ORDER BY p.anio_estreno DESC`,
+            values
+        );
+
+        return res.json({
+            success: true,
+            total: rows.length,
+            data: rows
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
     try {
         const [movies] = await pool.execute(
             `${movieSummary} WHERE p.idpelicula = ? AND (p.estado = 'aprobada' OR ? = 'administrador')`,
