@@ -91,6 +91,9 @@ La API actual está bajo `/api/v1`. Los prefijos anteriores `/api/...` se mantie
 | `GET` | `/api/v1/categorias`, `/api/v1/actores`, `/api/v1/directores` | Público |
 | `POST`, `PUT`, `DELETE` | Rutas de categorías, actores y directores | Administrador |
 
+- Examen 
+| `GET`| `/api/v1/peliculas` | Publico|
+
 Las reseñas aceptan `titulo`, `comentarios`, `idpelicula` y `puntaje` entero entre 1 y 10. Los votos únicos de reseñas se guardan en `resena_votos`; los likes a películas, en `pelicula_likes`, y no requieren que el usuario haya publicado o votado una reseña. Crear, editar o eliminar reseñas recalcula dentro de una transacción el promedio y total de reseñas de la película.
 
 El ranking se calcula como promedio de puntuaciones más likes de reseñas menos dislikes de reseñas. Los likes directos a películas se guardan por separado y no alteran ese puntaje. Para ordenamiento se admiten `ranking`, `popularidad` y `recientes`; la respuesta del listado incluye `data` y metadatos de `pagination`.
