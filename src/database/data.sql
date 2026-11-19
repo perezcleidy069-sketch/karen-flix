@@ -295,7 +295,7 @@ INSERT INTO usuarios (id, nombre, email, telefono, contrasena, avatar_url) VALUE
 -- ==========================================
 -- 6. INSERTAR RESEÑAS (Más de 50 registros)
 -- ==========================================
-INSERT IGNORE INTO resenas (id, idpelicula, idusuario, comentarios, fechaResena, puntaje) VALUES
+INSERT IGNORE INTO resenas (id, idpelicula, idusuario, comentarios, fechaResena, puntaje, estado) VALUES
 (1, 1, 1, '¡Una obra maestra de la ciencia ficción y el cine geek!', '2026-03-30', 10),
 (2, 2, 2, 'Increíbles efectos visuales y una historia muy atrapante.', '2026-03-31', 10),
 (3, 3, 3, 'Hermosa animación y un mensaje muy profundo.', '2026-04-01', 9),
