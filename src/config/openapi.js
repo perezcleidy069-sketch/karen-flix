@@ -218,7 +218,16 @@ export default {
                         limit: { type: 'integer' },
                         total: { type: 'integer' },
                         totalPages: { type: 'integer' }
-                    } }
+                    },
+                    PeliculasInactivas:{
+                        type: 'object',
+                        properties:{
+                            data:{ type:'array', items:{ $ref:'#/components/schemas/Movie'}}
+                            
+                        }
+                    } 
+                }
+
                 }
             }
         }
@@ -353,6 +362,14 @@ export default {
         },
         ...catalogPaths('categorias', 'categorías'),
         ...catalogPaths('actores', 'actores'),
-        ...catalogPaths('directores', 'directores')
+        ...catalogPaths('directores', 'directores'),
+
+        '/peliculas/inactivas':{
+            get:{
+                tags:['Películas'], summary:'Listar películas inactivas ( sin reseñas o reseñas inactivas por 6 meses)', 
+                responses:{ 200: response('Listado de pelìculas inactivas')}
+            }
+        }
     }
+
 };

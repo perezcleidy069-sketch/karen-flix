@@ -10,6 +10,8 @@ import resenaRoutes from './routers/resena.routes.js';
 import categoriaRoutes from './routers/categoria.routes.js';
 import actorRoutes from './routers/actor.routes.js';
 import directorRoutes from './routers/director.routes.js';
+import peliculasInactivasRouter from './routers/peliculas.inactivas.js'
+
 
 const app = express();
 const allowedOrigins = (process.env.CORS_ORIGINS || '')
@@ -48,6 +50,7 @@ app.use('/api/resenas', resenaRoutes);
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/actores', actorRoutes);
 app.use('/api/directores', directorRoutes);
+app.use('/api/peliculas', peliculasInactivasRouter);
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 app.use((error, req, res, next) => {
     if (res.headersSent) {
